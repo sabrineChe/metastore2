@@ -15,7 +15,7 @@ It allows you to
  
 ## Installation
 There are three ways to install metastore2 as a micorservice:
-- [Using](#Installation-via-DockerHub) the image available via [DockerHub](https://hub.docker.com/r/kitdm/) (***recommended***)
+- [Using](#Installation-via-DockerHub) the image available via [DockerHub](https://hub.docker.com/r/kitdm/metastore) (***recommended***)
 - [Building](#Build-docker-container-locally) docker image locally
 - [Building](#Build-and-run-locally) and running locally
 
@@ -27,7 +27,7 @@ In order to run this microservice via docker you'll need:
 
 ### Installation
 Typically, there is no need for locally building images as all version are accessible via DockerHub.
-Have a look of available images and their tags [here](https://hub.docker.com/r/kitdm/metastore2) (***available soon***)
+Have a look of available images and their tags [here](https://hub.docker.com/r/kitdm/metastore) 
 Just follow instructions [below](#Build-docker-container).
 
 ## Build docker container locally
