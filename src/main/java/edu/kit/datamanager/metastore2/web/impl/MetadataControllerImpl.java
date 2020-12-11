@@ -31,6 +31,7 @@ import edu.kit.datamanager.metastore2.web.IMetadataController;
 import edu.kit.datamanager.service.IAuditService;
 import edu.kit.datamanager.util.AuthenticationHelper;
 import edu.kit.datamanager.util.ControllerUtils;
+import io.swagger.v3.core.util.Json;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -95,13 +96,23 @@ public class MetadataControllerImpl implements IMetadataController {
 
   @Override
   public ResponseEntity createRecord(
-          @RequestPart(name = "record") final MetadataRecord record,
+          @RequestPart(name = "record") final MultipartFile recordDocument,
           @RequestPart(name = "document") final MultipartFile document,
           HttpServletRequest request,
           HttpServletResponse response,
           UriComponentsBuilder uriBuilder) throws URISyntaxException {
 
-    LOG.trace("Performing createRecord({},...).", record);
+    LOG.trace("Performing createRecord({},...).", recordDocument);
+    MetadataRecord record;
+    try {
+      if (recordDocument == null || recordDocument.isEmpty()) {
+        throw new IOException();
+      }
+      record = Json.mapper().readValue(recordDocument.getInputStream(), MetadataRecord.class);
+    } catch (IOException ex) {
+      LOG.error("No metadata record provided. Returning HTTP BAD_REQUEST.");
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No metadata record provided.");
+    }
 
     if (record.getRelatedResource() == null || record.getSchemaId() == null) {
       LOG.error("Mandatory attributes relatedResource and/or schemaId not found in record. Returning HTTP BAD_REQUEST.");
@@ -174,7 +185,11 @@ public class MetadataControllerImpl implements IMetadataController {
       LOG.trace("Writing user-provided metadata file to repository.");
       URL metadataFolderUrl = metastoreProperties.getMetadataFolder();
       try {
-        Path metadataDir = Paths.get(Paths.get(metadataFolderUrl.toURI()).toAbsolutePath().toString(), record.getId());
+        // Remove all '-' and split resulting string to substrings with 4 characters each.
+        String[] createPathToRecord = record.getId().replace("-", "").split("(?<=\\G.{4})");
+        createPathToRecord[createPathToRecord.length - 1] = record.getId();
+
+        Path metadataDir = Paths.get(Paths.get(metadataFolderUrl.toURI()).toAbsolutePath().toString(), createPathToRecord);
         if (!Files.exists(metadataDir)) {
           LOG.trace("Creating metadata directory at {}.", metadataDir);
           Files.createDirectories(metadataDir);
@@ -185,16 +200,16 @@ public class MetadataControllerImpl implements IMetadataController {
           }
         }
 
-        Path p = Paths.get(metadataDir.toAbsolutePath().toString(), getUniqueRecordHash(record));
-        if (Files.exists(p)) {
-          LOG.error("Metadata document conflict. A file at path {} already exists.", p);
+        Path absolutePathToRecord = Paths.get(metadataDir.toAbsolutePath().toString(), getUniqueRecordHash(record));
+        if (Files.exists(absolutePathToRecord)) {
+          LOG.error("Metadata document conflict. A file at path {} already exists.", absolutePathToRecord);
           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal filename conflict.");
         }
 
-        LOG.trace("Persisting valid metadata document at {}.", p);
-        Files.write(p, data);
+        LOG.trace("Persisting valid metadata document at {}.", absolutePathToRecord);
+        Files.write(absolutePathToRecord, data);
         LOG.trace("Metadata document successfully persisted. Updating record.");
-        record.setMetadataDocumentUri(p.toUri().toString());
+        record.setMetadataDocumentUri(absolutePathToRecord.toUri().toString());
         LOG.trace("Metadata record completed.");
       } catch (URISyntaxException ex) {
         LOG.error("Failed to determine schema storage location.", ex);
@@ -396,7 +411,10 @@ public class MetadataControllerImpl implements IMetadataController {
           LOG.trace("Writing user-provided metadata file to repository.");
           URL metadataFolderUrl = metastoreProperties.getMetadataFolder();
           try {
-            Path metadataDir = Paths.get(Paths.get(metadataFolderUrl.toURI()).toAbsolutePath().toString(), existingRecord.getId());
+            String[] createPathToRecord = existingRecord.getId().replace("-", "").split("(?<=\\G.{4})");
+            createPathToRecord[createPathToRecord.length - 1] = existingRecord.getId();
+
+            Path metadataDir = Paths.get(Paths.get(metadataFolderUrl.toURI()).toAbsolutePath().toString(), createPathToRecord);
             if (!Files.exists(metadataDir)) {
               LOG.trace("Creating metadata directory at {}.", metadataDir);
               Files.createDirectories(metadataDir);
