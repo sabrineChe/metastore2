@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- The code is now completely relying on the library of the kit-data-manager.
+- Metadata (schema) records now also versioned.
+## [0.2.4] - date 2020-12-16
+### Added
+- Support for messaging
+### Changed
+- Update to service-base version 0.2.0
 
 ## [0.2.3] - date 2020-12-07
 ### Fixed
@@ -46,7 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Registry for XSD files and support for XML metadata
 
-[Unreleased]: https://github.com/kit-data-manager/metastore2/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/kit-data-manager/metastore2/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/kit-data-manager/metastore2/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/kit-data-manager/metastore2/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/kit-data-manager/metastore2/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/kit-data-manager/metastore2/compare/v0.2.0...v0.2.1

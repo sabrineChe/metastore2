@@ -62,7 +62,7 @@ public interface IMetadataController {
             @ApiResponse(responseCode = "404", description = "Not found is returned, if no schema for the provided schema id was found."),
             @ApiResponse(responseCode = "409", description = "A Conflict is returned, if there is already a record for the related resource id and the provided schema id.")})
 
-  @RequestMapping(path = "/", method = RequestMethod.POST, consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+  @RequestMapping(path = "", method = RequestMethod.POST, consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
   @ResponseBody
   public ResponseEntity createRecord(
           @Parameter(description = "Json representation of the metadata record.", required = true) @RequestPart(name = "record", required = true) final MultipartFile record,
@@ -99,17 +99,20 @@ public interface IMetadataController {
           WebRequest wr,
           HttpServletResponse hsr);
 
-  @Operation(summary = "Get all records.", description = "List all records in a paginated and/or sorted form. The result can be refined by providing specific related resource id(s) and/or metadata schema id(s) valid records must match. "
-          + "If both parameters are provided, a record matches if its related resource identifier AND the used metadata schema are matching. "
+
+  @Operation(summary = "Get all records.", description = "List all records in a paginated and/or sorted form. The result can be refined by providing id, specific related resource id(s) and/or metadata schema id(s) valid records must match. "
+          + "If 'id' is provided all available versions for given 'id' will be returned and all other parameters will be ignored."
+          + "If 'resourceId' and 'schemaId' are provided, a record matches if its related resource identifier AND the used metadata schema are matching. "
           + "Furthermore, the UTC time of the last update can be provided in three different fashions: 1) Providing only updateFrom returns all records updated at or after the provided date, 2) Providing only updateUntil returns all records updated before or "
           + "at the provided date, 3) Providing both returns all records updated within the provided date range."
-          + "If no parameters are provided, all accessible records are listed. If versioning is enabled, only the most recent version is listed.",
+          + "If no parameters are provided, all accessible records are listed. If versioning is enabled, only the most recent version is listed (except in case of 'id' is provided).",
           responses = {
             @ApiResponse(responseCode = "200", description = "OK and a list of records or an empty list of no record matches.", content = @Content(array = @ArraySchema(schema = @Schema(implementation = MetadataRecord.class))))})
-  @RequestMapping(value = {"/"}, method = {RequestMethod.GET})
+  @RequestMapping(value = {""}, method = {RequestMethod.GET})
   @PageableAsQueryParam
   @ResponseBody
   public ResponseEntity<List<MetadataRecord>> getRecords(
+          @Parameter(description = "ID of the metadata document.", required = false) @RequestParam(value = "id", required = false) String id,
           @Parameter(description = "A list of related resource identifiers.", required = false) @RequestParam(value = "resourceId", required = false) List<String> relatedIds,
           @Parameter(description = "A list of metadata schema identifiers.", required = false) @RequestParam(value = "schemaId", required = false) List<String> schemaIds,
           @Parameter(description = "The UTC time of the earliest update of a returned record.", required = false) @RequestParam(name = "from", required = false) Instant updateFrom,
@@ -131,7 +134,7 @@ public interface IMetadataController {
   }  )
   ResponseEntity updateRecord(
           @Parameter(description = "The record identifier of related resource identifier.", required = true) @PathVariable("id") String id,
-          @Parameter(description = "JSON representation of the metadata record.", required = false) @RequestPart(name = "record", required = false) final MetadataRecord record,
+          @Parameter(description = "JSON representation of the metadata record.", required = false) @RequestPart(name = "record", required = false) final MultipartFile record,
           @Parameter(description = "The metadata document associated with the record. The document must match the schema defined in the record.", required = false) @RequestPart(name = "document", required = false) final MultipartFile document,
           final WebRequest request,
           final HttpServletResponse response,
